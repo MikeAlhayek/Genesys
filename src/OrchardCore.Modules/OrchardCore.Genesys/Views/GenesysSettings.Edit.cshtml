@@ -1,0 +1,32 @@
+@using CloudSolutions.Genesys.ViewModels
+@using OrchardCore
+
+@model GenesysSettingsViewModel
+
+<div class="@Orchard.GetWrapperClasses()">
+    <label asp-for="Organization" class="@Orchard.GetLabelClasses()">@T["Organization"]</label>
+    <div class="@Orchard.GetEndClasses()">
+        <input type="text" class="form-control" asp-for="Organization" placeholder="@T["The Organization"]" />
+    </div>
+</div>
+
+<div class="@Orchard.GetWrapperClasses()">
+    <label asp-for="Region" class="@Orchard.GetLabelClasses()">@T["Region"]</label>
+    <div class="@Orchard.GetEndClasses()">
+        <input type="text" class="form-control" asp-for="Region" placeholder="@T["The Region"]" />
+    </div>
+</div>
+
+<div class="@Orchard.GetWrapperClasses()">
+    <label asp-for="ClientId" class="@Orchard.GetLabelClasses()">@T["API client ID"]</label>
+    <div class="@Orchard.GetEndClasses()">
+        <input type="text" class="form-control" asp-for="ClientId" placeholder="@T["The API's client ID"]" />
+    </div>
+</div>
+
+<div class="@Orchard.GetWrapperClasses()">
+    <label asp-for="ClientSecret" class="@Orchard.GetLabelClasses()">@T["API client secret"]</label>
+    <div class="@Orchard.GetEndClasses()">
+        <input type="text" class="form-control" asp-for="ClientSecret" autocomplete="new-password" placeholder="@(Model.HasSecret ? T["The API's client secret is securely stored. Provide a new value or leave it blank."] : T["The API's client secret"])" />
+    </div>
+</div>
