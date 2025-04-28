@@ -1,12 +1,8 @@
+using OrchardCore.OpenId.Settings;
+
 namespace CloudSolutions.Genesys.Models;
 
-public sealed class GenesysSettings
+public sealed class GenesysSettings : OpenIdClientSettings
 {
-    public string Organization { get; set; }
 
-    public string Region { get; set; }
-
-    public string ClientId { get; set; }
-
-    public string ClientSecret { get; set; }
 }

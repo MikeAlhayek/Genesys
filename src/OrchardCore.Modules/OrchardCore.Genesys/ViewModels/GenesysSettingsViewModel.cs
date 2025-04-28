@@ -1,17 +1,15 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using OrchardCore.OpenId.ViewModels;
 
 namespace CloudSolutions.Genesys.ViewModels;
 
-public class GenesysSettingsViewModel
+public class GenesysSettingsViewModel : OpenIdClientSettingsViewModel
 {
-    public string Organization { get; set; }
-
-    public string ClientId { get; set; }
-
-    public string ClientSecret { get; set; }
-
-    public string Region { get; set; }
-
     [BindNever]
     public bool HasSecret { get; set; }
+
+    [BindNever]
+    public IEnumerable<SelectListItem> Authorities { get; set; }
 }
+
