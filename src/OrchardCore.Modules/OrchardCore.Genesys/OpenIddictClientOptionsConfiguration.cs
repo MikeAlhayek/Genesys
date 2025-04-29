@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using CloudSolutions.Genesys;
 using CloudSolutions.Genesys.Drivers;
 using CloudSolutions.Genesys.Models;
 using Microsoft.AspNetCore.DataProtection;
@@ -9,7 +10,7 @@ using OpenIddict.Client;
 using OpenIddict.Client.AspNetCore;
 using OrchardCore.Settings;
 
-namespace CloudSolutions.Genesys;
+namespace OrchardCore.Genesys;
 
 internal sealed class OpenIddictClientOptionsConfiguration
     : IConfigureOptions<OpenIddictClientOptions>, IConfigureNamedOptions<OpenIddictClientAspNetCoreOptions>
@@ -31,6 +32,11 @@ internal sealed class OpenIddictClientOptionsConfiguration
 
         if (string.IsNullOrEmpty(settings.ClientId) || string.IsNullOrEmpty(settings.ClientSecret) || settings.Authority is null)
         {
+            if (options.RedirectionEndpointUris.Count == 0)
+            {
+                options.RedirectionEndpointUris.Add(new Uri(GenesysConstants.DefaultSignIn, UriKind.Relative));
+            }
+
             return;
         }
 
@@ -58,8 +64,8 @@ internal sealed class OpenIddictClientOptionsConfiguration
             ProviderDisplayName = settings.DisplayName ?? "Genesys Cloud",
             Issuer = settings.Authority,
             ClientId = settings.ClientId,
-            RedirectUri = new Uri(settings.CallbackPath ?? "signin-genesys", UriKind.RelativeOrAbsolute),
-            PostLogoutRedirectUri = new Uri(settings.SignedOutCallbackPath ?? "signout-callback-genesys", UriKind.RelativeOrAbsolute),
+            RedirectUri = new Uri(settings.CallbackPath ?? GenesysConstants.DefaultSignIn, UriKind.RelativeOrAbsolute),
+            PostLogoutRedirectUri = new Uri(settings.SignedOutCallbackPath ?? GenesysConstants.DefaultSignOut, UriKind.RelativeOrAbsolute),
             Scopes =
             {
                 "user-basic-info",
@@ -95,7 +101,7 @@ internal sealed class OpenIddictClientOptionsConfiguration
         }
 
         // Note: claims are mapped by CallbackController, so the built-in mapping feature is unnecessary.
-        options.DisableWebServicesFederationClaimMapping = true;
+        // options.DisableWebServicesFederationClaimMapping = true;
 
         // TODO: use proper encryption/signing credentials, similar to what's used for the server feature.
         options.EncryptionCredentials.Add(new EncryptingCredentials(new SymmetricSecurityKey(

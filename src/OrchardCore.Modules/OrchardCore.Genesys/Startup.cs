@@ -1,3 +1,4 @@
+using CloudSolutions.Genesys;
 using CloudSolutions.Genesys.Drivers;
 using CloudSolutions.Genesys.Models;
 using CloudSolutions.Genesys.Services;
@@ -13,7 +14,7 @@ using OrchardCore.Navigation;
 using OrchardCore.OpenId.Settings;
 using OrchardCore.Settings;
 
-namespace CloudSolutions.Genesys;
+namespace OrchardCore.Genesys;
 
 public class Startup : StartupBase
 {
@@ -34,8 +35,37 @@ public class Startup : StartupBase
                // TODO: determine what flows we want to enable and whether this
                // should be configurable by the user (like the server feature).
                options.AllowAuthorizationCodeFlow()
-                      .AllowHybridFlow()
-                      .AllowImplicitFlow();
+                   .AllowHybridFlow()
+                   .AllowImplicitFlow();
+
+               options.AddDevelopmentEncryptionCertificate()
+                   .AddDevelopmentSigningCertificate();
+
+               options.AddEventHandler<OpenIddictClientEvents.ProcessChallengeContext>(builder =>
+               {
+                   builder.UseInlineHandler(static context =>
+                   {
+                       // If the client registration is managed by Orchard, attach the custom parameters set by the user.
+                       if (context.Registration.Properties.TryGetValue(nameof(OpenIdClientSettings), out var value) &&
+                           value is OpenIdClientSettings settings && settings.Parameters is { Length: > 0 } parameters)
+                       {
+                           foreach (var parameter in parameters)
+                           {
+                               context.Parameters[parameter.Name] = parameter.Value;
+                           }
+                       }
+
+                       return default;
+                   });
+
+                   builder.SetOrder(OpenIddictClientHandlers.AttachCustomChallengeParameters.Descriptor.Order - 1);
+               });
+
+               options.AddEventHandler<OpenIddictClientEvents.ProcessAuthenticationContext>(builder =>
+               {
+                   builder.UseScopedHandler<MapGenesysWebServicesFederationClaims>();
+                   builder.SetOrder(MapGenesysWebServicesFederationClaims.Descriptor.Order - 1);
+               });
 
                options.AddEventHandler<OpenIddictClientEvents.ProcessChallengeContext>(builder =>
                {
@@ -59,7 +89,6 @@ public class Startup : StartupBase
            });
 
         services.AddTransient<IConfigureOptions<OpenIddictClientOptions>, OpenIddictClientOptionsConfiguration>();
-
         services.AddTransient<IConfigureOptions<OpenIddictClientAspNetCoreOptions>, OpenIddictClientOptionsConfiguration>();
     }
 
@@ -72,14 +101,14 @@ public class Startup : StartupBase
         routes.MapAreaControllerRoute(
             name: "OpenIdCallback.LogInCallback",
             areaName: typeof(Startup).Namespace,
-            pattern: settings?.CallbackPath ?? "signin-genesys",
+            pattern: settings?.CallbackPath ?? GenesysConstants.DefaultSignIn,
             defaults: new { controller = "Callback", action = "LogInCallback" }
         );
 
         routes.MapAreaControllerRoute(
             name: "OpenIdCallback.LogOutCallback",
             areaName: typeof(Startup).Namespace,
-            pattern: settings?.SignedOutCallbackPath ?? "signout-callback-genesys",
+            pattern: settings?.SignedOutCallbackPath ?? GenesysConstants.DefaultSignOut,
             defaults: new { controller = "Callback", action = "LogOutCallback" }
         );
     }

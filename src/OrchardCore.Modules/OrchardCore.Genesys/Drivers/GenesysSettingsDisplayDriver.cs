@@ -10,9 +10,9 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using OrchardCore.DisplayManagement.Entities;
 using OrchardCore.DisplayManagement.Handlers;
 using OrchardCore.DisplayManagement.Views;
+using OrchardCore.Environment.Shell;
 using OrchardCore.Mvc.ModelBinding;
 using OrchardCore.OpenId;
-using OrchardCore.OpenId.Configuration;
 using OrchardCore.OpenId.Settings;
 using OrchardCore.Settings;
 
@@ -27,6 +27,7 @@ internal sealed class GenesysSettingsDisplayDriver : SiteDisplayDriver<GenesysSe
     private static readonly char[] _separator = [' ', ','];
 
     private readonly IAuthorizationService _authorizationService;
+    private readonly IShellReleaseManager _shellReleaseManager;
     private readonly IDataProtectionProvider _dataProtectionProvider;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -38,11 +39,13 @@ internal sealed class GenesysSettingsDisplayDriver : SiteDisplayDriver<GenesysSe
         IDataProtectionProvider dataProtectionProvider,
         IHttpContextAccessor httpContextAccessor,
         IAuthorizationService authorizationService,
+        IShellReleaseManager shellReleaseManager,
         IStringLocalizer<GenesysSettingsDisplayDriver> stringLocalizer)
     {
         _dataProtectionProvider = dataProtectionProvider;
         _httpContextAccessor = httpContextAccessor;
         _authorizationService = authorizationService;
+        _shellReleaseManager = shellReleaseManager;
         S = stringLocalizer;
     }
 
@@ -61,8 +64,8 @@ internal sealed class GenesysSettingsDisplayDriver : SiteDisplayDriver<GenesysSe
             model.ClientId = settings.ClientId;
             model.HasSecret = !string.IsNullOrWhiteSpace(settings.ClientSecret);
             model.DisplayName = settings.DisplayName;
-            model.Scopes = settings.Scopes != null ? string.Join(" ", settings.Scopes) : null;
-            model.Authority = settings.Authority?.AbsoluteUri;
+            model.Scopes = settings.Scopes != null ? string.Join(' ', settings.Scopes) : null;
+            model.Authority = settings.Authority?.ToString();
             model.CallbackPath = settings.CallbackPath;
             model.ClientId = settings.ClientId;
             model.HasClientSecret = !string.IsNullOrEmpty(settings.ClientSecret);
@@ -72,20 +75,20 @@ internal sealed class GenesysSettingsDisplayDriver : SiteDisplayDriver<GenesysSe
             model.StoreExternalTokens = settings.StoreExternalTokens;
             model.Authorities = new List<SelectListItem>()
             {
-                new SelectListItem("us_east_1 (mypurecloud.com)", "https://mypurecloud.com"),
-                new SelectListItem("eu_west_1 (mypurecloud.ie)", "https://mypurecloud.ie"),
-                new SelectListItem("eu_central_1 (mypurecloud.de)", "https://mypurecloud.de"),
-                new SelectListItem("ap_northeast_1 (mypurecloud.jp)", "https://mypurecloud.jp"),
-                new SelectListItem("ap_southeast_2 (mypurecloud.com.au)", "https://mypurecloud.com.au"),
-                new SelectListItem("us_west_2 (usw2.pure.cloud)", "https://usw2.pure.cloud"),
-                new SelectListItem("ca_central_1 (cac1.pure.cloud)", "https://cac1.pure.cloud"),
-                new SelectListItem("ap_northeast_2 (apne2.pure.cloud)", "https://apne2.pure.cloud"),
-                new SelectListItem("eu_west_2 (mypurecloud.com)", "https://euw2.pure.cloud"),
-                new SelectListItem("ap_south_1 (use2.us-gov-pure.cloud)", "https://use2.us-gov-pure.cloud"),
-                new SelectListItem("sa_east_1 (sae1.pure.cloud)", "https://sae1.pure.cloud"),
-                new SelectListItem("me_central_1 (mypurecloud.com)", "https://mec1.pure.cloud"),
-                new SelectListItem("ap_northeast_3 (apne3.pure.cloud)", "https://apne3.pure.cloud"),
-                new SelectListItem("eu_central_2 (euc2.pure.cloud)", "https://euc2.pure.cloud"),
+                new SelectListItem("us_east_1 (mypurecloud.com)", "https://mypurecloud.com/"),
+                new SelectListItem("eu_west_1 (mypurecloud.ie)", "https://mypurecloud.ie/"),
+                new SelectListItem("eu_central_1 (mypurecloud.de)", "https://mypurecloud.de/"),
+                new SelectListItem("ap_northeast_1 (mypurecloud.jp)", "https://mypurecloud.jp/"),
+                new SelectListItem("ap_southeast_2 (mypurecloud.com.au)", "https://mypurecloud.com.au/"),
+                new SelectListItem("us_west_2 (usw2.pure.cloud)", "https://usw2.pure.cloud/"),
+                new SelectListItem("ca_central_1 (cac1.pure.cloud)", "https://cac1.pure.cloud/"),
+                new SelectListItem("ap_northeast_2 (apne2.pure.cloud)", "https://apne2.pure.cloud/"),
+                new SelectListItem("eu_west_2 (mypurecloud.com)", "https://euw2.pure.cloud/"),
+                new SelectListItem("ap_south_1 (use2.us-gov-pure.cloud)", "https://use2.us-gov-pure.cloud/"),
+                new SelectListItem("sa_east_1 (sae1.pure.cloud)", "https://sae1.pure.cloud/"),
+                new SelectListItem("me_central_1 (mypurecloud.com)", "https://mec1.pure.cloud/"),
+                new SelectListItem("ap_northeast_3 (apne3.pure.cloud)", "https://apne3.pure.cloud/"),
+                new SelectListItem("eu_central_2 (euc2.pure.cloud)", "https://euc2.pure.cloud/"),
             };
 
             if (settings.ResponseType == OpenIdConnectResponseType.Code)
@@ -228,9 +231,11 @@ internal sealed class GenesysSettingsDisplayDriver : SiteDisplayDriver<GenesysSe
 
         if (!string.IsNullOrEmpty(model.ClientSecret))
         {
-            var protector = _dataProtectionProvider.CreateProtector(nameof(OpenIdClientConfiguration));
+            var protector = _dataProtectionProvider.CreateProtector(GenesysProtectorName);
             settings.ClientSecret = protector.Protect(model.ClientSecret);
         }
+
+        _shellReleaseManager.RequestRelease();
 
         return await EditAsync(site, settings, context);
     }

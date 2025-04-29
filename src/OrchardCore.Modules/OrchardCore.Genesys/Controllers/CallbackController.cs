@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using CloudSolutions.Genesys.Models;
 using Microsoft.AspNetCore;
@@ -54,15 +53,8 @@ public class CallbackController : Controller
             throw new InvalidOperationException("The external authorization data cannot be used for authentication.");
         }
 
-        // Build an identity based on the external claims and that will be used to create the authentication cookie.
-        //
-        // Note: for compatibility reasons, the claims are mapped to their WS-Federation equivalent
-        // using the default mapping provided by JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.
-        var claims = result.Principal.Claims.Select(claim =>
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.TryGetValue(claim.Type, out var type) ?
-            new Claim(type, claim.Value, claim.ValueType, claim.Issuer, claim.OriginalIssuer, claim.Subject) : claim);
 
-        var identity = new ClaimsIdentity(claims,
+        var identity = new ClaimsIdentity(result.Principal.Claims,
             authenticationType: CookieAuthenticationDefaults.AuthenticationScheme,
             nameType: ClaimTypes.Name,
             roleType: ClaimTypes.Role);
@@ -148,7 +140,7 @@ public class CallbackController : Controller
             return View("Error", new ErrorViewModel
             {
                 Error = response.Error,
-                ErrorDescription = response.ErrorDescription
+                ErrorDescription = response.ErrorDescription,
             });
         }
 

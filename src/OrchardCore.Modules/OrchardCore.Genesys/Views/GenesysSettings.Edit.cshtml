@@ -2,6 +2,7 @@
 @using Microsoft.IdentityModel.Protocols.OpenIdConnect
 @using OpenIddict.Abstractions
 @using OrchardCore
+@using CloudSolutions.Genesys
 
 @model GenesysSettingsViewModel
 
@@ -21,7 +22,9 @@
 
 <div class="mb-3" asp-validation-class-for="Authority">
     <label asp-for="Authority" class="form-label">@T["Authority"]</label>
-    <select asp-for="Authority" class="form-select" asp-items="Model.Authorities"></select>
+    <select asp-for="Authority" class="form-select" asp-items="Model.Authorities">
+        <option value="">@T["Select an authority"]</option>
+    </select>
     <span asp-validation-for="Authority"></span>
     <span class="hint">@T["Authority URL for Genesys Server Requests"]</span>
 </div>
@@ -35,14 +38,14 @@
 
 <div class="mb-3" asp-validation-class-for="CallbackPath">
     <label asp-for="CallbackPath" class="form-label">@T["CallbackPath"]</label>
-    <input asp-for="CallbackPath" placeholder="/signin-genesys" class="form-control" />
+    <input asp-for="CallbackPath" placeholder="@GenesysConstants.DefaultSignIn" class="form-control" />
     <span asp-validation-for="CallbackPath"></span>
     <span class="hint">@T["The request path, relative to the application's base path, where the user-agent will be redirected. The middleware will handle this request upon arrival."]</span>
 </div>
 
 <div class="mb-3" asp-validation-class-for="SignedOutCallbackPath">
     <label asp-for="SignedOutCallbackPath" class="form-label">@T["SignedOut CallbackPath"]</label>
-    <input asp-for="SignedOutCallbackPath" placeholder="/signout-callback-genesys" class="form-control" />
+    <input asp-for="SignedOutCallbackPath" placeholder="@GenesysConstants.DefaultSignIn" class="form-control" />
     <span asp-validation-for="SignedOutCallbackPath"></span>
     <span class="hint">@T["The request path within the application's base path where the user-agent will be redirected after signing out from the identity provider."]</span>
     <span class="hint">
